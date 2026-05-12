@@ -9,7 +9,7 @@ def load_all_documents(data_dir: str) -> List[Any]:
     documents = []
     # PDF files
 
-    pdf_files = list(data_path.glob("**/*.pdf"))
+    pdf_files = list(data_path.glob('**/*.pdf'))
     print(f"[DEBUG] Found {len(pdf_files)} PDF files: "
         f"{[str(f) for f in pdf_files]}")
 

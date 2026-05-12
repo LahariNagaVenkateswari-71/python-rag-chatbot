@@ -7,7 +7,6 @@ import numpy as np
 
 class EmbeddingPipeline:
     def __init__(self,model_name: str = "all-MiniLM-L6-v2",chunk_size: int = 1000,chunk_overlap: int = 200):
-
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.model = SentenceTransformer(model_name)
@@ -24,8 +23,21 @@ class EmbeddingPipeline:
         chunks = splitter.split_documents(documents)
         return chunks
 
-    def embed_chunks(self,chunks: List[Any]) -> np.ndarray:
-        texts = [chunk.page_content for chunk in chunks]
-    
-        embeddings = self.model.encode(texts,show_progress_bar=True)
+    def embed_chunks(self, chunks: List[Any]) -> np.ndarray:
+
+        texts = []
+
+        for chunk in chunks:
+
+            text = chunk.page_content.strip()
+
+            if text:
+                texts.append(text)
+
+        embeddings = self.model.encode(
+            texts,
+            show_progress_bar=False,
+            convert_to_numpy=True
+        )
+
         return embeddings

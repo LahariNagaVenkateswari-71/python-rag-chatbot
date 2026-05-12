@@ -6,18 +6,20 @@ from langchain_groq import ChatGroq
 load_dotenv()
 
 class RAGSearch:
-    def __init__(self,persist_dir: str = "faiss_store",embedding_model: str = "all-MiniLM-L6-v2",llm_model: str = "llama3-8b-8192"):
-        self.vectorstore = FaissVectorStore()
+    def __init__(self,persist_dir: str = "faiss_store",embedding_model: str = "all-MiniLM-L6-v2",llm_model: str = "llama-3.1-8b-instant"):
+        self.vectorstore = FaissVectorStore(persist_dir, embedding_model)
         # Load vector DB
-        faiss_path = os.path.join(persist_dir,"faiss.index")
-        meta_path = os.path.join(persist_dir,"metadata.pkl")
-        if (os.path.exists(faiss_path)and os.path.exists(meta_path)):
+        faiss_path = os.path.join(persist_dir, "faiss.index")
+        meta_path = os.path.join(persist_dir, "metadata.pkl")
+        if not (os.path.exists(faiss_path) and os.path.exists(meta_path)):
+            from src.load_data import load_all_documents
+            docs = load_all_documents("PDFs")
+            self.vectorstore.build_store(docs)
+        else:
             self.vectorstore.load()
 
         # Groq API Key
-        groq_api_key = os.getenv(
-            "GROQ_API_KEY"
-        )
+        groq_api_key = os.getenv("GROQ_API_KEY")
 
         # LLM
         self.llm = ChatGroq(
@@ -26,24 +28,28 @@ class RAGSearch:
         )
 
         print(
-            f"[INFO] Groq Model Loaded: "
-            f"{llm_model}"
-        )
+            f"[INFO] Groq Model Loaded: {llm_model}")
 
-    def search_and_summarize(self,query: str,top_k: int = 3) -> str:
-        results = self.vectorstore.search(query,top_k=top_k)
-        context = "\n\n".join(results)
-        if not context:
-            return "No relevant documents found."
+    def search_and_summarize(self, query: str, top_k: int = 3) -> str:
+        results = self.vectorstore.query(query, top_k=top_k)
+        texts = results
+        context = "\n\n".join(texts)
+
         prompt = f"""
-        Answer the question using the context below.
+        You are a friendly AI Python assistant.
 
-        Question:
+        If the user asks casual questions like greetings or introductions,
+        respond naturally like ChatGPT.
+
+        If the question is related to Python programming,
+        use the provided context to answer accurately.
+
+        User Question:
         {query}
 
         Context:
         {context}
         """
-        response = self.llm.invoke(prompt)
 
+        response = self.llm.invoke(prompt)
         return response.content
