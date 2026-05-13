@@ -4,14 +4,32 @@ from src.search import RAGSearch
 st.set_page_config(
     page_title="Python AI Assistant",
     page_icon="🤖",
-    layout="centered"
-)
+    layout="centered")
+# Cache chatbot so models don't reload every message
+@st.cache_resource
+def load_rag():
+    return RAGSearch()
+
+rag = load_rag()
 
 st.title("🤖 Python AI Assistant")
-st.markdown("Ask questions about Python documentation.")
+st.markdown("Ask questions about Python programming and documentation.")
 
-rag = RAGSearch()
+# Sidebar
+with st.sidebar:
 
+    st.title("⚙️ Settings")
+
+    st.markdown("### About")
+    st.write(
+        "AI-powered Python documentation assistant using RAG."
+    )
+
+    if st.button("🗑️ Clear Chat"):
+        st.session_state.messages = []
+        st.rerun()
+
+# Store chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -21,26 +39,37 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-user_input = st.chat_input("Ask something about Python...")
+# Chat input
+user_input = st.chat_input(
+    "Ask anything..."
+)
+
 if user_input:
 
-    # Show user message
+    # Save user message
     st.session_state.messages.append(
         {
             "role": "user",
             "content": user_input
         }
     )
-
+    # Display user message
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    answer = rag.search_and_summarize(user_input)
+    # Generate response
+    with st.spinner("Thinking..."):
 
-    # Show assistant message
+        answer = rag.search_and_summarize(
+            user_input,
+            chat_history=st.session_state.messages
+        )
+
+    # Display assistance response
     with st.chat_message("assistant"):
         st.markdown(answer)
 
+    # Saving assistant response
     st.session_state.messages.append(
         {
             "role": "assistant",

@@ -30,25 +30,33 @@ class RAGSearch:
         print(
             f"[INFO] Groq Model Loaded: {llm_model}")
 
-    def search_and_summarize(self, query: str, top_k: int = 3) -> str:
+    def search_and_summarize(self, query: str, chat_history=None, top_k: int = 2) -> str:
+
         results = self.vectorstore.query(query, top_k=top_k)
         texts = results
         context = "\n\n".join(texts)
+        history = ""
+
+        if chat_history:
+            for msg in chat_history[-4:]:
+                history += f"{msg['role']}: {msg['content']}\n"
 
         prompt = f"""
         You are a friendly AI Python assistant.
 
-        If the user asks casual questions like greetings or introductions,
-        respond naturally like ChatGPT.
+        Use previous conversation history to respond naturally.
 
-        If the question is related to Python programming,
-        use the provided context to answer accurately.
+        If the user asks Python-related questions,
+        use the provided documentation context.
+
+        Conversation History:
+        {history}
+
+        Documentation Context:
+        {context}
 
         User Question:
         {query}
-
-        Context:
-        {context}
         """
 
         response = self.llm.invoke(prompt)
