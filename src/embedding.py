@@ -14,17 +14,23 @@ class EmbeddingPipeline:
 
     def chunk_documents(self,documents: List[Any]) -> List[Any]:
 
+        # text splitter for chunking documents
+        # create recursive text splitter 
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,
             chunk_overlap=self.chunk_overlap,
             length_function=len,
             separators=["\n\n", "\n", " ", ""]
         )
+
+        # split documents in to chunks
         chunks = splitter.split_documents(documents)
         return chunks
 
+
     def embed_chunks(self, chunks: List[Any]) -> np.ndarray:
 
+        #store cleaned chunk texts
         texts = []
 
         for chunk in chunks:
@@ -34,9 +40,11 @@ class EmbeddingPipeline:
             if text:
                 texts.append(text)
 
+        # convert chunks in to embeddings
         embeddings = self.model.encode(
             texts,
             show_progress_bar=False,
+            # Return numpy array
             convert_to_numpy=True
         )
 

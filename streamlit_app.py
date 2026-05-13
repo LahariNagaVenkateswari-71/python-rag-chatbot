@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="Python AI Assistant",
     page_icon="🤖",
     layout="centered")
-# Cache chatbot so models don't reload every message
+
 @st.cache_resource
 def load_rag():
     return RAGSearch()
@@ -29,17 +29,14 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# Store chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display old messages
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat input
 user_input = st.chat_input(
     "Ask anything..."
 )
@@ -53,11 +50,10 @@ if user_input:
             "content": user_input
         }
     )
-    # Display user message
+  
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # Generate response
     with st.spinner("Thinking..."):
 
         answer = rag.search_and_summarize(
@@ -65,11 +61,9 @@ if user_input:
             chat_history=st.session_state.messages
         )
 
-    # Display assistance response
     with st.chat_message("assistant"):
         st.markdown(answer)
 
-    # Saving assistant response
     st.session_state.messages.append(
         {
             "role": "assistant",
